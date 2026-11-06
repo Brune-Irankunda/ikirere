@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-
+import { showWeather } from "../src/weather.js";
 import { parseArgs } from "node:util";
 const { values, positionals } = parseArgs({
     options: {
@@ -15,7 +15,6 @@ const { values, positionals } = parseArgs({
     allowPositionals: true
 });
 
-// Display help information
 if (values.help) {
     console.log("Welcome to Ikirere Weather CLI!");
     console.log("");
@@ -26,17 +25,18 @@ if (values.help) {
     console.log("  -h, --help       Show help");
     console.log("  -v, --version    Show version");
 }
+else if (positionals[0] === "weather") {
+    const city = positionals.slice(1).join(" ");
 
-// Display application version
-else if (values.version) {
-    console.log("Ikirere version 1.0.0");
+    if (!city) {
+        console.log("Please provide a city name.");
+        console.log("Example: npm start -- weather Kigali");
+    } else {
+        await showWeather(city);
+    }
 }
 
-else if (positionals.length === 0) {
-    console.log("Please provide a command.");
-    console.log("Example: ikirere weather Kigali");
-}
-
+// Handle unknown commands
 else {
-    console.log("Command received:", positionals);
+    console.log("Unknown command:", positionals[0]);
 }
