@@ -6,7 +6,6 @@ import { fileURLToPath } from "node:url";
 const PROJECT_DIR = fileURLToPath(new URL("../", import.meta.url));
 const DATA_DIR = path.join(PROJECT_DIR, "data");
 
-// Read information from a JSON file
 export async function readJSON(filename, defaultValue = []) {
     const filePath = path.join(DATA_DIR, filename);
 
@@ -23,7 +22,6 @@ export async function readJSON(filename, defaultValue = []) {
     }
 }
 
-// Save information to a JSON file
 export async function writeJSON(filename, data) {
     await mkdir(DATA_DIR, { recursive: true });
 
@@ -36,7 +34,6 @@ export async function writeJSON(filename, data) {
     );
 }
 
-// Save a city to favourites
 export async function addFavorite(city) {
     const favorites = await readJSON("favorites.json", []);
 
@@ -56,12 +53,10 @@ export async function addFavorite(city) {
     console.log(city + " added to your favourites!");
 }
 
-// Display saved favourite cities
 export async function getFavorites() {
     return await readJSON("favorites.json", []);
 }
 
-// Remove a city from favourites
 export async function removeFavorite(city) {
     const favorites = await readJSON("favorites.json", []);
 
@@ -77,4 +72,23 @@ export async function removeFavorite(city) {
     await writeJSON("favorites.json", updatedFavorites);
 
     console.log(city + " removed from your favourites!");
+}
+
+
+export async function addHistory(city) {
+    const history = await readJSON("history.json", []);
+
+    history.push({
+        city: city,
+        searchedAt: new Date().toLocaleString()
+    });
+
+    await writeJSON("history.json", history);
+
+    console.log("Search history saved.");
+}
+
+// Display search history
+export async function getHistory() {
+    return await readJSON("history.json", []);
 }

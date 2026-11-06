@@ -4,7 +4,9 @@ import { showWeather } from "../src/weather.js";
 import {
     addFavorite,
     getFavorites,
-    removeFavorite
+    removeFavorite,
+    addHistory,
+    getHistory
 } from "../src/storage.js";
 
 // Get commands from the terminal
@@ -31,6 +33,7 @@ if (values.help) {
     console.log("  npm start -- favorites add <city>");
     console.log("  npm start -- favorites list");
     console.log("  npm start -- favorites remove <city>");
+    console.log("  npm start -- history");
     console.log("");
     console.log("Options:");
     console.log("  -h, --help       Show help");
@@ -58,6 +61,7 @@ else if (positionals[0] === "weather") {
         process.exitCode = 1;
     } else {
         await showWeather(city);
+        await addHistory(city);
     }
 }
 
@@ -68,9 +72,7 @@ else if (positionals[0] === "favorites") {
 
     if (action === "add" && city) {
         await addFavorite(city);
-    }
-
-    else if (action === "list") {
+    } else if (action === "list") {
         const favorites = await getFavorites();
 
         if (favorites.length === 0) {
@@ -82,18 +84,29 @@ else if (positionals[0] === "favorites") {
                 console.log(`${index + 1}. ${favorite}`);
             });
         }
-    }
-
-    else if (action === "remove" && city) {
+    } else if (action === "remove" && city) {
         await removeFavorite(city);
-    }
-
-    else {
+    } else {
         console.log("Usage:");
         console.log("  npm start -- favorites add Kigali");
         console.log("  npm start -- favorites list");
         console.log("  npm start -- favorites remove Kigali");
         process.exitCode = 1;
+    }
+}
+
+// Handle history command
+else if (positionals[0] === "history") {
+    const history = await getHistory();
+
+    if (history.length === 0) {
+        console.log("No search history found.");
+    } else {
+        console.log("Your search history:");
+
+        history.forEach((item, index) => {
+            console.log(`${index + 1}. ${item.city} - ${item.searchedAt}`);
+        });
     }
 }
 
