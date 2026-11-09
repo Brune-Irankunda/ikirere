@@ -1,8 +1,8 @@
 
 import axios from "axios";
 
+// Get the coordinates of a city
 export async function getCoordinates(city) {
-    // Check if the city name is empty
     if (!city || city.trim() === "") {
         throw new Error("Please enter a city name.");
     }
@@ -47,15 +47,16 @@ export async function getCoordinates(city) {
     }
 }
 
+// Get current weather
 export async function getWeather(latitude, longitude) {
     try {
         const response = await axios.get(
             "https://api.open-meteo.com/v1/forecast",
             {
                 params: {
-                    latitude: latitude,
-                    longitude: longitude,
-                    current: "temperature_2m,relative_humidity_2m,wind_speed_10m",
+                    latitude,
+                    longitude,
+                    current: "temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code",
                     timezone: "auto"
                 },
                 timeout: 10000
@@ -70,5 +71,33 @@ export async function getWeather(latitude, longitude) {
         }
 
         throw new Error("Unable to get weather information.");
+    }
+}
+
+// Get a 7-day weather forecast
+export async function getForecast(latitude, longitude) {
+    try {
+        const response = await axios.get(
+            "https://api.open-meteo.com/v1/forecast",
+            {
+                params: {
+                    latitude,
+                    longitude,
+                    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max",
+                    timezone: "auto",
+                    forecast_days: 7
+                },
+                timeout: 10000
+            }
+        );
+
+        return response.data.daily;
+
+    } catch (error) {
+        if (error.code === "ECONNABORTED") {
+            throw new Error("Forecast request timed out. Please try again.");
+        }
+
+        throw new Error("Unable to get weather forecast.");
     }
 }

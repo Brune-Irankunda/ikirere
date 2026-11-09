@@ -1,6 +1,7 @@
 
 import { parseArgs } from "node:util";
-import { showWeather } from "../src/weather.js";
+import { showWeather, showForecast } from "../src/weather.js";
+
 import {
     addFavorite,
     getFavorites,
@@ -8,6 +9,11 @@ import {
     addHistory,
     getHistory
 } from "../src/storage.js";
+
+import {
+    getSettings,
+    updateSettings
+} from "../src/settings.js";
 
 // Get commands from the terminal
 const { values, positionals } = parseArgs({
@@ -30,10 +36,14 @@ if (values.help) {
     console.log("");
     console.log("Usage:");
     console.log("  npm start -- weather <city>");
+    console.log("  npm start -- forecast <city>");
     console.log("  npm start -- favorites add <city>");
     console.log("  npm start -- favorites list");
     console.log("  npm start -- favorites remove <city>");
     console.log("  npm start -- history");
+    console.log("  npm start -- settings");
+    console.log("  npm start -- settings set temperatureUnit fahrenheit");
+    console.log("  npm start -- settings set windSpeedUnit mph");
     console.log("");
     console.log("Options:");
     console.log("  -h, --help       Show help");
@@ -60,18 +70,36 @@ else if (positionals[0] === "weather") {
         console.error("Example: npm start -- weather Kigali");
         process.exitCode = 1;
     } else {
-        await showWeather(city);
-        await addHistory(city);
+        const success = await showWeather(city);
+
+        // Save only successful weather searches
+        if (success) {
+            await addHistory(city);
+        }
     }
 }
 
-// Handle favorites command
+// Handle forecast command
+else if (positionals[0] === "forecast") {
+    const city = positionals.slice(1).join(" ");
+
+    if (!city) {
+        console.error("Error: Please provide a city name.");
+        console.error("Example: npm start -- forecast Kigali");
+        process.exitCode = 1;
+    } else {
+        await showForecast(city);
+    }
+}
+
+// Handle favourites command
 else if (positionals[0] === "favorites") {
     const action = positionals[1];
     const city = positionals.slice(2).join(" ");
 
     if (action === "add" && city) {
         await addFavorite(city);
+
     } else if (action === "list") {
         const favorites = await getFavorites();
 
@@ -84,8 +112,10 @@ else if (positionals[0] === "favorites") {
                 console.log(`${index + 1}. ${favorite}`);
             });
         }
+
     } else if (action === "remove" && city) {
         await removeFavorite(city);
+
     } else {
         console.log("Usage:");
         console.log("  npm start -- favorites add Kigali");
@@ -107,6 +137,51 @@ else if (positionals[0] === "history") {
         history.forEach((item, index) => {
             console.log(`${index + 1}. ${item.city} - ${item.searchedAt}`);
         });
+    }
+}
+
+// Handle settings command
+else if (positionals[0] === "settings") {
+    const action = positionals[1];
+    const settingName = positionals[2];
+    const settingValue = positionals[3];
+
+    if (!action) {
+        const settings = await getSettings();
+
+        console.log("\nYour application settings:");
+        console.log(settings);
+    }
+
+    else if (action === "set" && settingName && settingValue) {
+        const allowedSettings = {
+            temperatureUnit: ["celsius", "fahrenheit"],
+            windSpeedUnit: ["km/h", "mph"],
+            language: ["en"]
+        };
+
+        if (
+            !allowedSettings[settingName] ||
+            !allowedSettings[settingName].includes(settingValue)
+        ) {
+            console.log("Invalid setting or value.");
+            console.log("Temperature: celsius or fahrenheit");
+            console.log("Wind speed: km/h or mph");
+            console.log("Language: en");
+            process.exitCode = 1;
+        } else {
+            await updateSettings({
+                [settingName]: settingValue
+            });
+        }
+    }
+
+    else {
+        console.log("Usage:");
+        console.log("  npm start -- settings");
+        console.log("  npm start -- settings set temperatureUnit fahrenheit");
+        console.log("  npm start -- settings set windSpeedUnit mph");
+        process.exitCode = 1;
     }
 }
 
